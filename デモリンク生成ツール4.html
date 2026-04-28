@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>デモリンク パラメータ生成ツール</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Meiryo UI",Meiryo,"Segoe UI",sans-serif;background:#F5F7FA;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem}
+.wrap{width:100%;max-width:700px}
+.title-card{background:#282D37;border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1rem;display:flex;align-items:center;gap:12px}
+.title-logo{width:36px;height:36px;background:#81D0DE;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.title-text h1{font-size:16px;font-weight:700;color:#FFFFFF;letter-spacing:0.02em}
+.title-text p{font-size:11px;color:#8B949E;margin-top:3px}
+.section{background:#FFFFFF;border:1px solid #DDE3EA;border-radius:10px;margin-bottom:10px;overflow:hidden}
+.sec-hdr{padding:10px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #EEF1F5}
+.step-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:0.05em;flex-shrink:0}
+.s0-badge{background:#FFF4E5;color:#B45309}
+.s1-badge{background:#E1F5EE;color:#0A6B4F}
+.s2-badge{background:#E6F0FA;color:#185FA5}
+.s3-badge{background:#EDE9FE;color:#5B4AB7}
+.sec-hdr-label{font-size:12px;font-weight:600;color:#4A5568}
+.sec-body{padding:14px 16px}
+
+/* STEP 0 所属部署 */
+.dept-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:480px){.dept-grid{grid-template-columns:repeat(2,1fr)}}
+.dept-btn{border:1.5px solid #CBD5E0;border-radius:8px;padding:10px 8px;background:#fff;font-size:12px;font-weight:600;color:#4A5568;cursor:pointer;text-align:center;transition:all 0.12s;font-family:inherit;line-height:1.4}
+.dept-btn:hover{background:#FFF8EE;border-color:#F59E0B}
+.dept-btn.selected{background:#FFF4E5;border-color:#F59E0B;color:#B45309}
+
+.group-sep{font-size:10px;font-weight:700;color:#8B949E;letter-spacing:0.08em;padding:4px 6px 2px;margin-top:4px}
+.group-sep:first-child{margin-top:0}
+.content-row{display:flex;align-items:center;cursor:pointer;border-radius:7px;padding:7px 8px;transition:background 0.1s;margin-bottom:1px;user-select:none}
+.content-row:hover{background:#F0F4F8}
+.content-row.selected{background:#EBF4FF}
+.chk{width:20px;height:20px;border:1.5px solid #CBD5E0;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:10px;transition:all 0.12s;background:#fff}
+.content-row.selected .chk{background:#285A80;border-color:#285A80}
+.chk-mark{display:none;width:10px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px)}
+.content-row.selected .chk-mark{display:block}
+.prod-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-right:10px;flex-shrink:0;width:100px;text-align:center}
+.tag-gx{background:#E6F0FA;color:#185FA5}
+.tag-h7{background:#E8F5E9;color:#2E7D32}
+.row-name{font-size:13px;color:#2D3748;flex:1}
+.content-row.selected .row-name{color:#285A80;font-weight:600}
+.preview-btn{flex-shrink:0;margin-left:8px;padding:4px 10px;border-radius:5px;border:1px solid #CBD5E0;background:#fff;font-size:11px;font-weight:600;color:#285A80;cursor:pointer;white-space:nowrap;transition:all 0.12s;font-family:inherit}
+.preview-btn:hover{background:#EBF7FA;border-color:#68C0D4}
+.content-row.selected .preview-btn{border-color:#68C0D4;background:#EBF7FA}
+.param-wrap{display:flex;gap:8px;align-items:center}
+.param-icon{font-size:16px;flex-shrink:0}
+.param-input{flex:1;border:1px solid #CBD5E0;border-radius:7px;padding:9px 12px;font-size:13px;font-family:inherit;color:#2D3748;outline:none;transition:border-color 0.15s,box-shadow 0.15s}
+.param-input:focus{border-color:#68C0D4;box-shadow:0 0 0 3px rgba(104,192,212,0.2)}
+.param-hint{font-size:11px;color:#94A3B8;margin-top:6px;padding-left:28px}
+.link-box{background:#F8FAFC;border:1px solid #DDE3EA;border-radius:7px;padding:11px 13px;font-size:12px;font-family:"Courier New",Courier,monospace;color:#2D3748;word-break:break-all;line-height:1.6;min-height:44px}
+.link-placeholder{color:#94A3B8;font-family:"Meiryo UI",Meiryo,sans-serif;font-size:12px}
+.copy-btn{margin-top:8px;width:100%;padding:10px;border-radius:7px;border:1px solid #68C0D4;background:#FFFFFF;font-size:13px;font-weight:600;color:#285A80;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit}
+.copy-btn:hover:not(:disabled){background:#EBF7FA;border-color:#285A80}
+.copy-btn:active:not(:disabled){transform:scale(0.98)}
+.copy-btn:disabled{opacity:0.35;cursor:default;border-color:#CBD5E0;color:#94A3B8}
+.copy-btn.copied{border-color:#1D9E75;color:#0A6B4F;background:#E1F5EE}
+.copy-icon{width:14px;height:14px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8}
+.divider{height:1px;background:#EEF1F5;margin:4px 0}
+
+/* 未選択時のSTEP1以降をグレーアウト */
+.section.locked{opacity:0.45;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="title-card">
+    <div class="title-logo">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#282D37" stroke-width="2.2" stroke-linecap="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+    </div>
+    <div class="title-text">
+      <h1>デモリンク パラメータ生成ツール</h1>
+      <p>Galileopt DX / Hirameki7 &nbsp;|&nbsp; MJS営業支援</p>
+    </div>
+  </div>
+
+  <!-- STEP 0: 所属部署選択 -->
+  <div class="section" id="section-step0">
+    <div class="sec-hdr">
+      <span class="step-badge s0-badge">STEP 1</span>
+      <span class="sec-hdr-label">所属部署を選択</span>
+    </div>
+    <div class="sec-body">
+      <div class="dept-grid">
+        <button class="dept-btn" data-code="sol1"   onclick="selectDept(this)">ソリューション<br>第1支社</button>
+        <button class="dept-btn" data-code="sol2"   onclick="selectDept(this)">ソリューション<br>第2支社</button>
+        <button class="dept-btn" data-code="sol3"   onclick="selectDept(this)">ソリューション<br>第3支社</button>
+        <button class="dept-btn" data-code="bpsi"   onclick="selectDept(this)">BP･SI推進支社</button>
+        <button class="dept-btn" data-code="kanagawa" onclick="selectDept(this)">ソリューション<br>神奈川支社</button>
+        <button class="dept-btn" data-code="is"     onclick="selectDept(this)">インサイド<br>セールスグループ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1: コンテンツ選択 -->
+  <div class="section" id="section-step1">
+    <div class="sec-hdr">
+      <span class="step-badge s1-badge">STEP 2</span>
+      <span class="sec-hdr-label">使用するコンテンツを選択</span>
+    </div>
+    <div class="sec-body" id="content-list">
+<div class="group-sep">GalileoptDX</div>
+<div class="content-row" data-idx="0" data-url="https://product.plainer.co.jp/c/mjssol/80282191-b5ab-425b-8808-0f6bdc2ccfe6" onclick="toggle(0)">
+  <div class="chk"><div class="chk-mark"></div></div>
+  <span class="prod-tag tag-gx">GalileoptDX</span>
+  <span class="row-name">BI機能</span>
+  <button class="preview-btn" onclick="event.stopPropagation();openUrl('https://product.plainer.co.jp/c/mjssol/80282191-b5ab-425b-8808-0f6bdc2ccfe6')">確認する ↗</button>
+</div>
+<div class="content-row" data-idx="1" data-url="https://product.plainer.co.jp/c/mjssol/b43e1f5c-2cb5-4493-b421-12d9e114c55c" onclick="toggle(1)">
+  <div class="chk"><div class="chk-mark"></div></div>
+  <span class="prod-tag tag-gx">GalileoptDX</span>
+  <span class="row-name">非会計科目と特殊計算</span>
+  <button class="preview-btn" onclick="event.stopPropagation();openUrl('https://product.plainer.co.jp/c/mjssol/b43e1f5c-2cb5-4493-b421-12d9e114c55c')">確認する ↗</button>
+</div>
+<div class="content-row" data-idx="2" data-url="https://product.plainer.co.jp/c/mjssol/eaa2da25-ec93-4dd0-a905-d6658f0af1f1" onclick="toggle(2)">
+  <div class="chk"><div class="chk-mark"></div></div>
+  <span class="prod-tag tag-gx">GalileoptDX</span>
+  <span class="row-name">決算更新デモツアー</span>
+  <button class="preview-btn" onclick="event.stopPropagation();openUrl('https://product.plainer.co.jp/c/mjssol/eaa2da25-ec93-4dd0-a905-d6658f0af1f1')">確認する ↗</button>
+</div>
+<div class="divider"></div>
+<div class="group-sep">Hirameki7</div>
+<div class="content-row" data-idx="3" data-url="https://product.plainer.co.jp/c/mjssol/246aa57e-1ad1-45f9-a45d-88f2f0bde257" onclick="toggle(3)">
+  <div class="chk"><div class="chk-mark"></div></div>
+  <span class="prod-tag tag-h7">Hirameki7</span>
+  <span class="row-name">助成金補助金 診断ナビ</span>
+  <button class="preview-btn" onclick="event.stopPropagation();openUrl('https://product.plainer.co.jp/c/mjssol/246aa57e-1ad1-45f9-a45d-88f2f0bde257')">確認する ↗</button>
+</div>
+<div class="content-row" data-idx="4" data-url="https://product.plainer.co.jp/c/mjssol/3f2ca4c2-f7fe-481e-b059-3b48a8a4a608" onclick="toggle(4)">
+  <div class="chk"><div class="chk-mark"></div></div>
+  <span class="prod-tag tag-h7">Hirameki7</span>
+  <span class="row-name">名刺管理 機能の紹介</span>
+  <button class="preview-btn" onclick="event.stopPropagation();openUrl('https://product.plainer.co.jp/c/mjssol/3f2ca4c2-f7fe-481e-b059-3b48a8a4a608')">確認する ↗</button>
+</div>
+<div class="content-row" data-idx="5" data-url="https://product.plainer.co.jp/c/mjssol/392d463d-b9cd-491a-80c8-1454df9ad7e2" onclick="toggle(5)">
+  <div class="chk"><div class="chk-mark"></div></div>
+  <span class="prod-tag tag-h7">Hirameki7</span>
+  <span class="row-name">事例② 取引先からの書類受領</span>
+  <button class="preview-btn" onclick="event.stopPropagation();openUrl('https://product.plainer.co.jp/c/mjssol/392d463d-b9cd-491a-80c8-1454df9ad7e2')">確認する ↗</button>
+</div>
+<div class="content-row" data-idx="6" data-url="https://product.plainer.co.jp/c/mjssol/ee04cdc5-3bd6-464a-a6b9-c0fba1b27217" onclick="toggle(6)">
+  <div class="chk"><div class="chk-mark"></div></div>
+  <span class="prod-tag tag-h7">Hirameki7</span>
+  <span class="row-name">事例① セミナー集客・参加申込管理</span>
+  <button class="preview-btn" onclick="event.stopPropagation();openUrl('https://product.plainer.co.jp/c/mjssol/ee04cdc5-3bd6-464a-a6b9-c0fba1b27217')">確認する ↗</button>
+</div>
+<div class="content-row" data-idx="7" data-url="https://product.plainer.co.jp/c/mjssol/443e72d7-4c9e-4fb8-8862-c43ff00dbfc4" onclick="toggle(7)">
+  <div class="chk"><div class="chk-mark"></div></div>
+  <span class="prod-tag tag-h7">Hirameki7</span>
+  <span class="row-name">事例③ 採用サイト作成・採用業務タスク管理</span>
+  <button class="preview-btn" onclick="event.stopPropagation();openUrl('https://product.plainer.co.jp/c/mjssol/443e72d7-4c9e-4fb8-8862-c43ff00dbfc4')">確認する ↗</button>
+</div>
+    </div>
+  </div>
+
+  <!-- STEP 2: パラメータ入力 -->
+  <div class="section" id="section-step2">
+    <div class="sec-hdr">
+      <span class="step-badge s2-badge">STEP 3</span>
+      <span class="sec-hdr-label">パラメータを入力（メールアドレス推奨）</span>
+    </div>
+    <div class="sec-body">
+      <div class="param-wrap">
+        <span class="param-icon">✉</span>
+        <input class="param-input" type="text" id="param-input" placeholder="例: tanaka@example.com" oninput="updateLink()">
+      </div>
+      <div class="param-hint">入力した値がリンクの末尾に付与されます</div>
+    </div>
+  </div>
+
+  <!-- STEP 3: リンク生成・コピー -->
+  <div class="section" id="section-step3">
+    <div class="sec-hdr">
+      <span class="step-badge s3-badge">STEP 4</span>
+      <span class="sec-hdr-label">生成されたリンクをコピー</span>
+    </div>
+    <div class="sec-body">
+      <div class="link-box" id="link-display">
+        <span class="link-placeholder">← STEP 1 から順に入力してください</span>
+      </div>
+      <button class="copy-btn" id="copy-btn" onclick="copyLink()" disabled>
+        <svg class="copy-icon" viewBox="0 0 16 16">
+          <rect x="5" y="5" width="9" height="9" rx="1.5"/>
+          <path d="M3 11H2a1 1 0 01-1-1V2a1 1 0 011-1h8a1 1 0 011 1v1"/>
+        </svg>
+        <span id="copy-label">リンクをコピー</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+<script>
+var selectedIdx = -1;
+var selectedDeptCode = '';
+
+/* ---- 所属部署選択 ---- */
+function selectDept(btn) {
+  document.querySelectorAll('.dept-btn').forEach(function(b){ b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  selectedDeptCode = btn.getAttribute('data-code');
+  updateLink();
+}
+
+/* ---- コンテンツ選択 ---- */
+function toggle(i) {
+  var rows = document.querySelectorAll('.content-row');
+  if (selectedIdx === i) {
+    selectedIdx = -1;
+    rows[i].classList.remove('selected');
+  } else {
+    if (selectedIdx >= 0) rows[selectedIdx].classList.remove('selected');
+    selectedIdx = i;
+    rows[i].classList.add('selected');
+  }
+  updateLink();
+}
+
+/* ---- リンク生成 ---- */
+function updateLink() {
+  var param = document.getElementById('param-input').value.trim();
+  var disp  = document.getElementById('link-display');
+  var btn   = document.getElementById('copy-btn');
+
+  if (!selectedDeptCode) {
+    disp.innerHTML = '<span class="link-placeholder">← STEP 1 で所属部署を選択してください</span>';
+    btn.disabled = true; return;
+  }
+  if (selectedIdx < 0) {
+    disp.innerHTML = '<span class="link-placeholder">← STEP 2 でコンテンツを選択してください</span>';
+    btn.disabled = true; return;
+  }
+  if (!param) {
+    disp.innerHTML = '<span class="link-placeholder">← STEP 3 にパラメータを入力してください</span>';
+    btn.disabled = true; return;
+  }
+  var url = document.querySelectorAll('.content-row')[selectedIdx].getAttribute('data-url');
+  disp.textContent = url + '?pl_uid=' + selectedDeptCode + '_' + param;
+  btn.disabled = false;
+}
+
+/* ---- コピー（Teams対応） ---- */
+function copyLink() {
+  var text = document.getElementById('link-display').textContent;
+  var btn  = document.getElementById('copy-btn');
+  var lbl  = document.getElementById('copy-label');
+  if (!text || btn.disabled) return;
+
+  var done = function() {
+    btn.classList.add('copied');
+    lbl.textContent = 'コピーしました！';
+    setTimeout(function(){ btn.classList.remove('copied'); lbl.textContent = 'リンクをコピー'; }, 2500);
+  };
+
+  /* Clipboard API（モダンブラウザ） */
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(function(){ fallbackCopy(text, done); });
+  } else {
+    fallbackCopy(text, done);
+  }
+}
+
+/* Teams埋め込みでClipboard APIが使えない場合のフォールバック */
+function fallbackCopy(text, callback) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;border:0;padding:0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok && callback) callback();
+  } catch(e) {
+    /* 最終手段: リンクボックスを選択状態にして手動コピーを促す */
+    var box = document.getElementById('link-display');
+    var range = document.createRange();
+    range.selectNodeContents(box);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    var lbl = document.getElementById('copy-label');
+    lbl.textContent = 'Ctrl+C でコピーしてください';
+  }
+}
+
+/* ---- 確認するボタン（Teams内でも新規タブで開く） ---- */
+function openUrl(url) {
+  /* Teams WebView内ではwindow.openが制限される場合があるためanchorで対処 */
+  var a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+</script>
+</body>
+</html>
